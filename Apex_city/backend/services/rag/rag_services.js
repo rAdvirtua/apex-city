@@ -13,7 +13,7 @@ export async function initRAG() {
   try {
     const complaints = await Complaint.find();
     if (!complaints || complaints.length === 0) {
-      console.log("⚠️ No complaints found in DB. Using fallback empty data.");
+      console.log(" No complaints found in DB. Using fallback empty data.");
       vectorStore = new MemoryVectorStore();
       return;
     }
@@ -39,9 +39,9 @@ Created At: ${new Date(c.createdAt).toLocaleString()}
     });
 
     vectorStore = await MemoryVectorStore.fromDocuments(docs, embeddings);
-    console.log(`✅ RAG vector index built with ${complaints.length} complaints`);
+    console.log(` RAG vector index built with ${complaints.length} complaints`);
   } catch (err) {
-    console.error("❌ Error initializing RAG store:", err);
+    console.error(" Error initializing RAG store:", err);
   }
 }
 
@@ -82,7 +82,7 @@ Answer:
 
     return reply;
   } catch (err) {
-    console.error("❌ Error in getChatbotResponse:", err);
+    console.error(" Error in getChatbotResponse:", err);
     return "Sorry, I’m having trouble fetching the details right now.";
   }
 }
