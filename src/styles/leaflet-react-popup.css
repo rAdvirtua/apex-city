@@ -1,0 +1,54 @@
+.react-popup-wrapper {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.react-popup-wrapper .leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* hide the little triangular tip so the card stands alone */
+.react-popup-wrapper .leaflet-popup-tip {
+  display: none !important;
+}
+
+/* ensure popup container doesn't clip our card */
+.leaflet-popup-content-wrapper.react-popup-wrapper {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-close-button {
+  color: inherit;
+}
+
+.leaflet-popup-react-container {
+  width: 340px; /* control width to match IssueCard */
+  box-sizing: border-box;
+}
+
+/* compact marker style used for map markers */
+.custom-marker-icon{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+}
+.custom-marker-icon .dot{
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  background:var(--primary);
+  box-shadow:0 1px 3px rgba(0,0,0,0.3);
+}
+.custom-marker-icon .label{
+  max-width:140px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
