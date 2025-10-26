@@ -1,0 +1,22 @@
+# This file is created to configure Netlify deployment.
+
+# Settings for the frontend build
+[build]
+  # This command is run from the base directory
+  command = "npm run build"
+  # The output of the build command
+  publish = "dist"
+  # The base directory, relative to the repository root.
+  base = "frontend"
+
+# Secrets scanning configuration
+[build.processing.secrets]
+  # Omit these keys from secrets scanning as they are public and required by the frontend.
+  omit_keys = [
+    "VITE_SUPABASE_PUBLISHABLE_KEY",
+    "VITE_SUPABASE_URL",
+    "VITE_EMAILJS_SERVICE_ID",
+    "VITE_EMAILJS_PUBLIC_KEY",
+    "VITE_EMAILJS_TEMPLATE_ID",
+    "VITE_SUPABASE_PROJECT_ID"
+  ]

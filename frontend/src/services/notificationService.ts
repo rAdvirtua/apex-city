@@ -1,5 +1,5 @@
 // Notification Service - email only
-import { sendEmail, EmailMessage } from './emailService';
+import { sendEmail, EmailMessage, testEmailConnection } from './emailService';
 
 export interface NotificationData {
   assigneeName: string;
@@ -98,7 +98,6 @@ export const testNotificationService = async (): Promise<boolean> => {
     console.log('Testing notification service...');
     
     // Test email connection
-    const { testEmailConnection } = await import('./emailService');
     const emailTest = await testEmailConnection();
     
     console.log('Email test:', emailTest ? '✅' : '❌');
