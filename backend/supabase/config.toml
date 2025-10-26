@@ -1,7 +1,0 @@
-project_id = "hzujwdlepakizeodkgbg"
-
-[functions.hello]
-verify_jwt = true
-
-[functions.classify-issue]
-verify_jwt = false
