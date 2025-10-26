@@ -34,6 +34,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   <Link to="/my-reports" className="hover:text-primary-foreground/80 transition">
                     My Reports
                   </Link>
+                  <Link to="/chat" className="hover:text-primary-foreground/80 transition">
+                    AI Assistant
+                  </Link>
                 </>
               )}
             </div>

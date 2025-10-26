@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, Star, Trophy, User, Settings, FileText, Users, LogOut, Shield } from 'lucide-react';
+import { Menu, Star, Trophy, User, Settings, FileText, Users, LogOut, Shield, MessageCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -16,6 +16,7 @@ export default function HamburgerMenu() {
     ...(isAdmin ? [{ icon: Shield, label: 'Admin Dashboard', path: '/admin' }] : []),
     { icon: User, label: 'User Info', path: '/profile' },
     { icon: FileText, label: 'My Reports', path: '/my-reports' },
+    { icon: MessageCircle, label: 'AI Assistant', path: '/chat' },
     { icon: Trophy, label: 'Leaderboard', path: '/leaderboard' },
     { icon: Star, label: 'Rate Us', path: '/rate' },
     { icon: Users, label: 'Contribute', path: '/contribute' },

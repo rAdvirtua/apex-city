@@ -10,6 +10,7 @@ export default function BottomNav() {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: FileText, label: 'Reports', path: '/my-reports' },
     { icon: Map, label: 'Map', path: '/map' },
+    { icon: MessageCircle, label: 'Chat', path: '/chat' },
     { icon: User, label: 'Profile', path: '/profile' },
   ];
 
