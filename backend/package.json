@@ -1,0 +1,22 @@
+{
+  "name": "apex-city-backend",
+  "version": "1.0.0",
+  "description": "Apex City Backend Services",
+  "private": true,
+  "scripts": {
+    "deploy": "supabase functions deploy",
+    "deploy:chatbot": "supabase functions deploy chatbot",
+    "deploy:classify": "supabase functions deploy classify-issue",
+    "dev": "supabase functions serve",
+    "login": "supabase login",
+    "link": "supabase link",
+    "secrets:set": "supabase secrets set"
+  },
+  "keywords": [
+    "supabase",
+    "edge-functions",
+    "backend"
+  ],
+  "author": "Apex City Team",
+  "license": "MIT"
+}

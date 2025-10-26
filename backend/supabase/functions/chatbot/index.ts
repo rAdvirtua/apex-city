@@ -17,8 +17,7 @@ interface Issue {
   reporter_name?: string;
 }
 
-// Simple vector store simulation
-class SimpleVectorStore {
+class VectorStore {
   private issues: Issue[] = [];
   private initialized = false;
 
@@ -26,49 +25,36 @@ class SimpleVectorStore {
     if (this.initialized) return;
     
     try {
-      // Fetch all issues from Supabase
       const { data, error } = await supabaseClient.rpc('get_issues_with_reporters', { p_admin_area: null });
       
       if (error) {
-        console.error('Error fetching issues for RAG:', error);
+        console.error('Error fetching issues:', error);
         return;
       }
 
       this.issues = (data as Issue[]) || [];
       this.initialized = true;
-      console.log(`RAG vector index built with ${this.issues.length} issues`);
+      console.log(`Vector store initialized with ${this.issues.length} issues`);
     } catch (err) {
-      console.error('Error initializing RAG store:', err);
+      console.error('Error initializing vector store:', err);
     }
   }
 
-  // Simple similarity search based on text matching
   similaritySearch(query: string, k: number = 3): Issue[] {
     const queryLower = query.toLowerCase();
     
-    // Score issues based on relevance
     const scoredIssues = this.issues.map(issue => {
       let score = 0;
       
-      // Check title relevance
       if (issue.title.toLowerCase().includes(queryLower)) score += 3;
-      
-      // Check description relevance
       if (issue.description.toLowerCase().includes(queryLower)) score += 2;
-      
-      // Check category relevance
       if (issue.category.toLowerCase().includes(queryLower)) score += 2;
-      
-      // Check location relevance
       if (issue.location_address.toLowerCase().includes(queryLower)) score += 1;
-      
-      // Check status relevance
       if (issue.status.toLowerCase().includes(queryLower)) score += 1;
       
       return { issue, score };
     });
 
-    // Sort by score and return top k
     return scoredIssues
       .filter(item => item.score > 0)
       .sort((a, b) => b.score - a.score)
@@ -77,14 +63,13 @@ class SimpleVectorStore {
   }
 }
 
-const vectorStore = new SimpleVectorStore();
+const vectorStore = new VectorStore();
 
-// Google Gemini AI integration
 async function getGeminiResponse(userQuery: string, context: string): Promise<string> {
   const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
   
   if (!geminiApiKey) {
-    console.warn('GEMINI_API_KEY not found, using fallback response');
+    console.warn('GEMINI_API_KEY not found, using fallback');
     return generateFallbackResponse(userQuery);
   }
 
@@ -141,7 +126,6 @@ Answer:`;
   }
 }
 
-// Fallback response generator (only used when Gemini is unavailable)
 function generateFallbackResponse(query: string): string {
   const queryLower = query.toLowerCase();
   
@@ -176,20 +160,16 @@ Deno.serve(async (req) => {
 
     console.log(`User: ${message}`)
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!
     
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2')
     const supabaseClient = createClient(supabaseUrl, supabaseKey)
 
-    // Initialize RAG system
     await vectorStore.initialize(supabaseClient)
 
-    // Get similar issues
     const similarIssues = vectorStore.similaritySearch(message, 3)
     
-    // Create context from similar issues
     const context = similarIssues.length > 0 
       ? similarIssues.map(issue => `
 Issue ID: ${issue.id}
@@ -203,7 +183,6 @@ ${issue.reporter_name ? `Reported by: ${issue.reporter_name}` : ''}
       `).join('\n---\n')
       : 'No related issues found in the database.';
     
-    // Generate AI response using Gemini
     const reply = await getGeminiResponse(message, context)
 
     console.log(`Bot: ${reply}`)
