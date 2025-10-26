@@ -79,67 +79,78 @@ class SimpleVectorStore {
 
 const vectorStore = new SimpleVectorStore();
 
-// Rule-based response generator
-function generateRuleBasedResponse(query: string, similarIssues: Issue[]): string {
+// Google Gemini AI integration
+async function getGeminiResponse(userQuery: string, context: string): Promise<string> {
+  const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+  
+  if (!geminiApiKey) {
+    console.warn('GEMINI_API_KEY not found, using fallback response');
+    return generateFallbackResponse(userQuery);
+  }
+
+  try {
+    const prompt = `
+You are "Apex City AI Assistant" — a helpful civic chatbot for the Apex City civic engagement platform.
+You help citizens with:
+
+1. Checking the status of their reported issues
+2. Finding information about similar issues in their area
+3. Understanding how to report new civic issues
+4. Getting help with categories like potholes, streetlights, garbage, water issues, etc.
+
+Use the context below if relevant to answer the user's question. Be polite, concise, and helpful.
+If the context doesn't contain relevant information, provide general guidance about using the platform.
+
+Context from similar issues:
+${context}
+
+User Query: "${userQuery}"
+
+Answer:`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || generateFallbackResponse(userQuery);
+    
+  } catch (error) {
+    console.error('Error calling Gemini API:', error);
+    return generateFallbackResponse(userQuery);
+  }
+}
+
+// Fallback response generator (only used when Gemini is unavailable)
+function generateFallbackResponse(query: string): string {
   const queryLower = query.toLowerCase();
   
-  // Status check queries
   if (queryLower.includes('status') || queryLower.includes('check')) {
-    if (similarIssues.length > 0) {
-      const issue = similarIssues[0];
-      return `I found a similar issue: "${issue.title}" (${issue.status}). You can check the status of your specific issue by going to the "My Reports" section in the app.`;
-    }
-    return "To check the status of your reported issues, go to the 'My Reports' section in the app. You can see all your submitted reports and their current status there.";
+    return "To check the status of your reported issues, go to the 'My Reports' section in the app.";
   }
   
-  // Report new issue queries
-  if (queryLower.includes('report') || queryLower.includes('submit') || queryLower.includes('new')) {
-    return "To report a new civic issue, you can:\n1. Use the 'Report Issue' button on the main dashboard\n2. Choose between AI-assisted reporting (with photo) or manual reporting\n3. Fill in the details and submit your report";
-  }
-  
-  // Category-specific queries
-  if (queryLower.includes('pothole') || queryLower.includes('road')) {
-    if (similarIssues.length > 0) {
-      const roadIssues = similarIssues.filter(i => i.category.toLowerCase().includes('road') || i.title.toLowerCase().includes('pothole'));
-      return `I found ${roadIssues.length} similar road-related issues in the system. You can report road problems like potholes using the "Report Issue" feature.`;
-    }
-    return "Road issues like potholes can be reported through our platform. Use the 'Report Issue' feature and select the appropriate category.";
-  }
-  
-  if (queryLower.includes('streetlight') || queryLower.includes('light')) {
-    return "Streetlight issues can be reported through our platform. Use the 'Report Issue' feature and select 'Streetlight' as the category.";
-  }
-  
-  if (queryLower.includes('garbage') || queryLower.includes('trash') || queryLower.includes('waste')) {
-    return "Garbage and waste management issues can be reported through our platform. Use the 'Report Issue' feature and select the appropriate category.";
-  }
-  
-  if (queryLower.includes('water') || queryLower.includes('pipe') || queryLower.includes('leak')) {
-    return "Water-related issues like leaks or pipe problems can be reported through our platform. Use the 'Report Issue' feature and select the appropriate category.";
-  }
-  
-  // Location queries
-  if (queryLower.includes('nearby') || queryLower.includes('area') || queryLower.includes('location')) {
-    if (similarIssues.length > 0) {
-      return `I found ${similarIssues.length} issues in the system. You can view all issues on the map by going to the 'Map View' section to see what's happening in your area.`;
-    }
-    return "You can view all reported issues in your area by going to the 'Map View' section. This shows all civic issues on an interactive map.";
-  }
-  
-  // General help
-  if (queryLower.includes('help') || queryLower.includes('how')) {
-    return `I can help you with:
-• Checking the status of your reported issues
-• Finding information about civic issues in your area
-• Reporting new issues (potholes, streetlights, garbage, etc.)
-• Navigating the app features
-
-What would you like to know more about?`;
-  }
-  
-  // Default response
-  if (similarIssues.length > 0) {
-    return `I found ${similarIssues.length} similar issues in our system. You can view all issues on the map or report a new issue using the app's features. How else can I help you?`;
+  if (queryLower.includes('report') || queryLower.includes('submit')) {
+    return "To report a new civic issue, use the 'Report Issue' button on the main dashboard.";
   }
   
   return "I'm here to help with civic issues! You can report problems, check statuses, or view issues on the map. What would you like to do?";
@@ -178,8 +189,22 @@ Deno.serve(async (req) => {
     // Get similar issues
     const similarIssues = vectorStore.similaritySearch(message, 3)
     
-    // Generate response
-    const reply = generateRuleBasedResponse(message, similarIssues)
+    // Create context from similar issues
+    const context = similarIssues.length > 0 
+      ? similarIssues.map(issue => `
+Issue ID: ${issue.id}
+Title: ${issue.title}
+Category: ${issue.category}
+Description: ${issue.description}
+Location: ${issue.location_address}
+Status: ${issue.status}
+Created: ${new Date(issue.created_at).toLocaleDateString()}
+${issue.reporter_name ? `Reported by: ${issue.reporter_name}` : ''}
+      `).join('\n---\n')
+      : 'No related issues found in the database.';
+    
+    // Generate AI response using Gemini
+    const reply = await getGeminiResponse(message, context)
 
     console.log(`Bot: ${reply}`)
 
